@@ -29,18 +29,18 @@ let renderer = null;
 const fftSize = 2048;
 
 const emitTones = [
-  16801,
-  17200,
-  17600,
-  18000,
-  18400,
-  18800,
-  19200,
-  19600,
-  20000,
-  20400,
-  20800,
-  21200,
+  5081,
+  5348,
+  5430,
+  5531,
+  5657,
+  5812,
+  6003,
+  6240,
+  6533,
+  6894,
+  7342,
+  7894,
 ];
 
 const emitTonesLevelCorr = [
@@ -115,7 +115,7 @@ function onStart(index) {
       loopSynth.stop();
 
     const freq = emitTones[index];
-    const amp = decibelToLinear(emitTonesLevelCorr[index]);
+    const amp = 0.01 * decibelToLinear(emitTonesLevelCorr[index]);
     emitSynth.start(freq, amp);
   } else {
     if (currentIndex < emitTones.length)
