@@ -3,7 +3,7 @@ import { default as audio } from 'waves-audio';
 import MobileDetect from 'mobile-detect';
 import SelectorButtons from './utils/SelectorButtons';
 import ToneSynth from './utils/ToneSynth';
-import LoopSynth from './utils/LoopSynth';
+//import LoopSynth from './utils/LoopSynth';
 import SpectrumAnalyser from './utils/SpectrumAnalyser';
 import { setupOverlay, resumeAudioContext, setupAudioInput } from './utils/helpers';
 
@@ -15,8 +15,9 @@ let currentIndex = -1;
 const audioContext = audio.audioContext;
 let stream = null;
 let emitSynth = null;
+let auxSynth = null;
 let reSynths = [];
-let loopSynth = null;
+// let loopSynth = null;
 let analyser = null;
 const analyserMin = -120;
 const analyserMax = 12;
@@ -29,18 +30,21 @@ let renderer = null;
 const fftSize = 2048;
 
 const emitTones = [
-  5081,
-  5348,
-  5430,
-  5531,
-  5657,
-  5812,
-  6003,
-  6240,
-  6533,
-  6894,
-  7342,
-  7894,
+  1056,
+  1248,
+  1488,
+  1760,
+  1968,
+  2320,
+];
+
+const auxTones = [
+  404,
+  424,
+  444,
+  464,
+  484,
+  504,
 ];
 
 const emitTonesLevelCorr = [
@@ -59,18 +63,18 @@ const emitTonesLevelCorr = [
 ];
 
 const reTones = [
-  281,
-  348,
-  430,
-  531,
-  657,
-  812,
-  1003,
-  1240,
-  1533,
-  1894,
-  2342,
-  2894,
+  405,
+  3120,
+  426,
+  3141,
+  442,
+  3162,
+  468,
+  3123,
+  489,
+  3184,
+  490,
+  3300,
 ];
 
 const loops = ['noise'];
@@ -97,6 +101,7 @@ function initAudioInput() {
     })
     .catch((err) => {
       emitSynth.stop();
+      auxSynth.stop();
       selectorButtons.deselect();
 
       errorOverlay.innerHTML = `Oops, ${err}.`;
@@ -110,30 +115,16 @@ function onStart(index) {
     initAudioInput(index);
   }
 
-  if (index < emitTones.length) {
-    if (currentIndex >= emitTones.length)
-      loopSynth.stop();
-
-    const freq = emitTones[index];
-    const amp = 0.01 * decibelToLinear(emitTonesLevelCorr[index]);
-    emitSynth.start(freq, amp);
-  } else {
-    if (currentIndex < emitTones.length)
-      emitSynth.stop();
-
-    const loop = loops[index - emitTones.length];
-    loopSynth.start(loop);
-  }
+  const amp = 0.01 * decibelToLinear(emitTonesLevelCorr[index]);
+  emitSynth.start(emitTones[index], amp);
+  auxSynth.start(auxTones[index], amp);
 
   currentIndex = index;
 }
 
 function onStop(index) {
-  if (currentIndex < emitTones.length)
-    emitSynth.stop();
-  else
-    loopSynth.stop();
-
+  emitSynth.stop();
+  auxSynth.stop();
   currentIndex = -1;
 }
 
@@ -189,9 +180,11 @@ function updateSpectrum(array, peaks) {
   displaySpectrum(array);
   displayPeaks(peaks);
 
-  for (let i = 0; i < reTones.length; i++) {
-    if (i !== currentIndex)
-      reSynths[i].gain = decibelToLinear(peaks[i].level);
+  for (let i = 0; i < reTones.length / 2; i++) {
+    if (i !== currentIndex) {
+      reSynths[2 * i].gain = decibelToLinear(peaks[i].level);
+      reSynths[2 * i + 1].gain = decibelToLinear(peaks[i].level);
+    }
   }
 }
 
@@ -215,11 +208,12 @@ function main() {
   canvas.height = analyserMax - analyserMin;
 
   emitSynth = new ToneSynth();
+  auxSynth = new ToneSynth();
 
   for (let i = 0; i < reTones.length; i++)
     reSynths[i] = new ToneSynth();
 
-  loopSynth = new LoopSynth();
+  // loopSynth = new LoopSynth();
 
   selectorButtons = new SelectorButtons('button-container', onStart, onStop);
 
@@ -231,7 +225,7 @@ function main() {
   for (let i = 0; i < loops.length; i++) {
     const index = emitTones.length + i;
     const label = loops[i];
-    loopSynth.addSound(label, `sounds/${label}.wav`, () => selectorButtons.enable(index));
+    // loopSynth.addSound(label, `sounds/${label}.wav`, () => selectorButtons.enable(index));
     selectorButtons.add(label);
   }
 
