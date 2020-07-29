@@ -29,21 +29,6 @@ let renderer = null;
 const fftSize = 2048;
 
 const emitTones = [
-  281,
-  348,
-  430,
-  531,
-  657,
-  812,
-  1003,
-  1240,
-  1533,
-  1894,
-  2342,
-  2894,
-];
-
-const emitTonesLevelCorr = [
   16800,
   17200,
   17600,
@@ -56,6 +41,21 @@ const emitTonesLevelCorr = [
   20400,
   20800,
   21200,
+];
+
+const emitTonesLevelCorr = [
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
 ];
 
 const reTones = [
