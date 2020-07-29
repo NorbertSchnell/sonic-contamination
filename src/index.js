@@ -115,7 +115,7 @@ function onStart(index) {
       loopSynth.stop();
 
     const freq = emitTones[index];
-    const amp = 0.01 * decibelToLinear(emitTonesLevelCorr[index]);
+    const amp = decibelToLinear(emitTonesLevelCorr[index]);
     emitSynth.start(freq, amp);
   } else {
     if (currentIndex < emitTones.length)
