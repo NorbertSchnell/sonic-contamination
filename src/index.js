@@ -186,8 +186,8 @@ function main() {
   selectorButtons = new SelectorButtons('button-container', onStart, onStop);
 
   for (let i = 0; i < setup.length; i++) {
-    const idFreqs = setup[i].id;
-    const label = `${idFreqs[0]} / ${idFreqs[1]}`;
+    const s = setup[i];
+    const label = `${s.model}.${s.device}`;
     selectorButtons.add(label);
   }
 

@@ -1,4 +1,6 @@
 export default [{
+  model: 1,
+  device: 1,
   id: [
     2730.000,
     2275.000,
@@ -10,6 +12,8 @@ export default [{
     212.809,
   ],
 }, {
+  model: 1,
+  device: 2,
   id: [
     5616.000,
     4680.000,
@@ -21,6 +25,8 @@ export default [{
     438.031,
   ],
 }, {
+  model: 1,
+  device: 3,
   id: [
     8528.000,
     7106.667,
@@ -32,6 +38,8 @@ export default [{
     664.773,
   ],
 }, {
+  model: 1,
+  device: 4,
   id: [
     11440.000,
     9533.333,
@@ -43,6 +51,8 @@ export default [{
     892.284,
   ],
 }, {
+  model: 2,
+  device: 1,
   id: [
     4095.000,
     3412.500,
@@ -54,6 +64,8 @@ export default [{
     319.213,
   ],
 }, {
+  model: 2,
+  device: 2,
   id: [
     8424.000,
     7020.000,
@@ -65,6 +77,8 @@ export default [{
     657.046,
   ],
 }, {
+  model: 2,
+  device: 3,
   id: [
     12792.000,
     10660.000,
@@ -76,6 +90,8 @@ export default [{
     997.160,
   ],
 }, {
+  model: 2,
+  device: 4,
   id: [
     17160.000,
     14300.000,
@@ -87,6 +103,8 @@ export default [{
     1338.427,
   ],
 }, {
+  model: 3,
+  device: 1,
   id: [
     3412.500,
     2843.750,
@@ -98,6 +116,8 @@ export default [{
     266.011,
   ],
 }, {
+  model: 3,
+  device: 2,
   id: [
     7020.000,
     5850.000,
@@ -109,6 +129,8 @@ export default [{
     547.538,
   ],
 }, {
+  model: 3,
+  device: 3,
   id: [
     10660.000,
     8883.333,
@@ -120,6 +142,8 @@ export default [{
     830.967,
   ],
 }, {
+  model: 3,
+  device: 4,
   id: [
     14300.000,
     11916.667,
