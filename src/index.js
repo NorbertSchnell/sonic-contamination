@@ -191,8 +191,9 @@ function main() {
   selectorButtons = new SelectorButtons('button-container', onStart, onStop);
 
   for (let i = 0; i < setup.length; i++) {
-    const buttonIndex = i + 1;
-    selectorButtons.add(buttonIndex.toString());
+    const idFreqs = setup[i].id;
+    const label = `${idFreqs[0]} / ${idFreqs[1]}`;
+    selectorButtons.add(label);
   }
 
   selectorButtons.enable();
