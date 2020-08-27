@@ -8,7 +8,8 @@ import SpectrumAnalyser from './utils/SpectrumAnalyser';
 import { setupOverlay, resumeAudioContext, setupAudioInput } from './utils/helpers';
 import { default as setup } from './setup';
 
-console.log(setup);
+let os = null;
+let runningOnMobile = true;
 
 let selectorButtons = null;
 let initializedAudioInput = false;
@@ -89,7 +90,7 @@ function onStart(index) {
     const currentSet = setup[index]
 
     idSynth.start(currentSet.id, 0.1);
-    reSynth.start(currentSet.re, 0.01);
+    reSynth.start(currentSet.re, 0);
 
     currentIndex = index;
     currentIdFreqs = currentSet.id;
@@ -156,8 +157,10 @@ function displayPeaks(peaks) {
 }
 
 function updateSpectrum(array, peaks) {
-  displaySpectrum(array);
-  displayPeaks(peaks);
+  if (!runningOnMobile) {
+    displaySpectrum(array);
+    displayPeaks(peaks);
+  }
 
   let power = 0;
 
@@ -168,24 +171,16 @@ function updateSpectrum(array, peaks) {
       power += decibelToPower(peak.level);
   }
 
-  const amp = 0.01 + Math.max(0, Math.min(0.5, 1000 * Math.sqrt(power)));
+  const amp = Math.max(0, Math.min(0.5, 1000 * Math.sqrt(power)));
   reSynth.gain = amp;
 }
 
 function main() {
-  // const ua = window.navigator.userAgent;
-  // const md = new MobileDetect(ua);
+  const ua = window.navigator.userAgent;
+  const md = new MobileDetect(ua);
 
-  // this.os = (function() {
-  //   const os = md.os();
-
-  //   if (os === 'AndroidOS')
-  //     return 'android';
-  //   else if (os === 'iOS')
-  //     return 'ios';
-  //   else
-  //     return 'other';
-  // })();
+  os = md.os();
+  runningOnMobile = (os === 'AndroidOS' || os === 'iOS');
 
   canvasContainer = document.getElementById('canvas-container');
   canvas = document.getElementById('spectrum-canvas');
