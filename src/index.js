@@ -187,7 +187,7 @@ function main() {
 
   for (let i = 0; i < setup.length; i++) {
     const s = setup[i];
-    const label = `${s.model}.${s.device}`;
+    const label = `${s.model}.${s.device} (${s.id[0]}+${s.id[1]})`;
     selectorButtons.add(label);
   }
 
