@@ -11,7 +11,7 @@ function decibelToPower(val) {
 };
 
 const freqTolerance = 4;
-const levelThreshold = 3;
+const levelThreshold = -3;
 const lpB1 = 0.666;
 const lpA = 0.333;
 

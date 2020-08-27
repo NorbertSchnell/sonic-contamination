@@ -3,21 +3,23 @@ import { default as audio } from 'waves-audio';
 import MobileDetect from 'mobile-detect';
 import SelectorButtons from './utils/SelectorButtons';
 import ToneSynth from './utils/ToneSynth';
-//import LoopSynth from './utils/LoopSynth';
+import PulseSynth from './utils/PulseSynth';
 import SpectrumAnalyser from './utils/SpectrumAnalyser';
 import { setupOverlay, resumeAudioContext, setupAudioInput } from './utils/helpers';
+import { default as setup } from './setup';
+
+console.log(setup);
 
 let selectorButtons = null;
 let initializedAudioInput = false;
 let errorOverlay = null;
 let currentIndex = -1;
+let currentIdFreqs = null;
 
 const audioContext = audio.audioContext;
 let stream = null;
-let emitSynth = null;
-let auxSynth = null;
-let reSynths = [];
-// let loopSynth = null;
+let idSynth = null;
+let reSynth = null;
 let analyser = null;
 const analyserMin = -120;
 const analyserMax = 12;
@@ -29,55 +31,16 @@ let renderer = null;
 
 const fftSize = 2048;
 
-const emitTones = [
-  1056,
-  1248,
-  1488,
-  1760,
-  1968,
-  2320,
-];
+let idFreqs = [];
 
-const auxTones = [
-  404,
-  424,
-  444,
-  464,
-  484,
-  504,
-];
+for (let s of setup) {
+  for (let freq of s.id)
+    idFreqs.push(freq);
+}
 
-const emitTonesLevelCorr = [
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-];
+idFreqs.sort((a, b) => a - b);
 
-const reTones = [
-  405,
-  3120,
-  426,
-  3141,
-  442,
-  3162,
-  468,
-  3123,
-  489,
-  3184,
-  490,
-  3300,
-];
-
-const loops = ['noise'];
+console.log(idFreqs);
 
 function linearToDecibel(val) {
   return 8.685889638065035 * Math.log(val); // 20 * log10(val)
@@ -87,45 +50,58 @@ function decibelToLinear(val) {
   return Math.exp(0.11512925464970229 * val); // pow(10, val / 20)
 };
 
+function powerToDecibel(val) {
+  return 4.3429448190325175 * Math.log(val); // 10 * log10(val)
+};
+
+function decibelToPower(val) {
+  return Math.exp(0.23025850929940458 * val); // pow(10, val / 10)
+};
+
 function initAudioInput() {
   Promise.all([resumeAudioContext(), setupAudioInput()])
     .then(([undefined, stream]) => {
-      analyser = new SpectrumAnalyser(fftSize, emitTones, 0.2, updateSpectrum);
+      analyser = new SpectrumAnalyser(fftSize, idFreqs, 0.2, updateSpectrum);
       analyser.start();
-
-      for (let i = 0; i < reTones.length; i++)
-        reSynths[i].start(reTones[i], 0);
 
       const mediaStreamSource = audioContext.createMediaStreamSource(stream);
       mediaStreamSource.connect(analyser.input);
     })
     .catch((err) => {
-      emitSynth.stop();
-      auxSynth.stop();
+      idSynth.stop();
+      reSynth.stop();
       selectorButtons.deselect();
 
-      errorOverlay.innerHTML = `Oops, ${err}.`;
+      errorOverlay.innerHTML = `Oops, ${err} (${err.stack}).`;
       errorOverlay.classList.add('open');
     });
 }
 
 function onStart(index) {
-  if (!initializedAudioInput) {
-    initializedAudioInput = true;
-    initAudioInput(index);
+  if (index !== currentIndex) {
+    onStop(currentIndex);
+
+    if (!initializedAudioInput) {
+      initializedAudioInput = true;
+      initAudioInput(index);
+    }
+
+    const currentSet = setup[index]
+
+    idSynth.start(currentSet.id, 0.1);
+    reSynth.start(currentSet.re, 0.01);
+
+    currentIndex = index;
+    currentIdFreqs = currentSet.id;
   }
-
-  const amp = 0.01 * decibelToLinear(emitTonesLevelCorr[index]);
-  emitSynth.start(emitTones[index], amp);
-  auxSynth.start(auxTones[index], amp);
-
-  currentIndex = index;
 }
 
 function onStop(index) {
-  emitSynth.stop();
-  auxSynth.stop();
+  idSynth.stop();
+  reSynth.stop();
+
   currentIndex = -1;
+  currentIdFreqs = null;
 }
 
 function onResize() {
@@ -158,21 +134,24 @@ function displaySpectrum(array) {
 function displayPeaks(peaks) {
   const ctx = canvas.getContext('2d');
 
-  ctx.strokeStyle = '#000';
   ctx.lineWidth = 1;
   ctx.globalAlpha = 1;
 
-  for (let i = 0; i < peaks.length; i++) {
-    if (i !== currentIndex) {
-      const peak = peaks[i];
-      const x = peak.bin;
-      const y = analyserScale * (peak.level - analyserMin);
+  for (let peak of peaks) {
+    const freq = peak.freq;
 
-      ctx.beginPath();
-      ctx.moveTo(x, canvas.height);
-      ctx.lineTo(x, canvas.height * (1 - y));
-      ctx.stroke();
-    }
+    if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1]))
+      ctx.strokeStyle = '#f00';
+    else
+      ctx.strokeStyle = '#0f0';
+
+    const x = peak.bin;
+    const y = analyserScale * (peak.level - analyserMin);
+
+    ctx.beginPath();
+    ctx.moveTo(x, canvas.height);
+    ctx.lineTo(x, canvas.height * (1 - y));
+    ctx.stroke();
   }
 }
 
@@ -180,12 +159,17 @@ function updateSpectrum(array, peaks) {
   displaySpectrum(array);
   displayPeaks(peaks);
 
-  for (let i = 0; i < reTones.length / 2; i++) {
-    if (i !== currentIndex) {
-      reSynths[2 * i].gain = decibelToLinear(peaks[i].level);
-      reSynths[2 * i + 1].gain = decibelToLinear(peaks[i].level);
-    }
+  let power = 0;
+
+  for (let peak of peaks) {
+    const freq = peak.freq;
+
+    if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1]))
+      power += decibelToPower(peak.level);
   }
+
+  const amp = 0.01 + Math.max(0, Math.min(0.5, 1000 * Math.sqrt(power)));
+  reSynth.gain = amp;
 }
 
 function main() {
@@ -207,26 +191,14 @@ function main() {
   canvas = document.getElementById('spectrum-canvas');
   canvas.height = analyserMax - analyserMin;
 
-  emitSynth = new ToneSynth();
-  auxSynth = new ToneSynth();
-
-  for (let i = 0; i < reTones.length; i++)
-    reSynths[i] = new ToneSynth();
-
-  // loopSynth = new LoopSynth();
+  idSynth = new PulseSynth();
+  reSynth = new ToneSynth();
 
   selectorButtons = new SelectorButtons('button-container', onStart, onStop);
 
-  for (let i = 0; i < emitTones.length; i++) {
-    const label = emitTones[i].toString();
-    selectorButtons.add(label);
-  }
-
-  for (let i = 0; i < loops.length; i++) {
-    const index = emitTones.length + i;
-    const label = loops[i];
-    // loopSynth.addSound(label, `sounds/${label}.wav`, () => selectorButtons.enable(index));
-    selectorButtons.add(label);
+  for (let i = 0; i < setup.length; i++) {
+    const buttonIndex = i + 1;
+    selectorButtons.add(buttonIndex.toString());
   }
 
   selectorButtons.enable();
