@@ -162,7 +162,7 @@ function onSpectrum(array, peaks) {
         power += decibelToPower(peak.level);
     }
 
-    const amp = Math.max(0, Math.min(0.5, 1000 * Math.sqrt(power)));
+    const amp = Math.max(0, Math.min(0.2, 1000 * Math.sqrt(power)));
     reSynth.gain = amp;
   }
 

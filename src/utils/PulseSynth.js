@@ -48,7 +48,7 @@ class QuadSynth {
         const lfo = audioContext.createOscillator();
         lfo.connect(mod.gain);
         lfo.type = 'sine';
-        lfo.frequency.value = 0.25 + 0.25 * Math.random();
+        lfo.frequency.value = 1 + 1 * Math.random();
         lfo.start(time);
 
         const osc = audioContext.createOscillator();
