@@ -6,10 +6,10 @@ const audioContext = audio.audioContext;
 function setupOverlay(id, hasButton = true, callback = null) {
   const overlay = document.getElementById(`${id}-overlay`);
   overlay.addEventListener('click', () => {
-    overlay.classList.remove('open');
-
     if (callback)
       callback();
+    else
+      overlay.classList.remove('open');
   });
 
   if (hasButton) {

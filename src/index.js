@@ -13,6 +13,7 @@ let runningOnMobile = true;
 
 let selectorButtons = null;
 let initializedAudioInput = false;
+let welcomeOverlay = null;
 let errorOverlay = null;
 let currentIndex = -1;
 let currentIdFreqs = null;
@@ -67,11 +68,13 @@ function initAudioInput() {
 
       const mediaStreamSource = audioContext.createMediaStreamSource(stream);
       mediaStreamSource.connect(analyser.input);
+
+      welcomeOverlay.classList.remove('open');      
     })
     .catch((err) => {
-      idSynth.stop();
-      reSynth.stop();
-      selectorButtons.deselect();
+      // idSynth.stop();
+      // reSynth.stop();
+      // selectorButtons.deselect();
 
       errorOverlay.innerHTML = `Oops, ${err} (${err.stack}).`;
       errorOverlay.classList.add('open');
@@ -82,10 +85,10 @@ function onStart(index) {
   if (index !== currentIndex) {
     onStop(currentIndex);
 
-    if (!initializedAudioInput) {
-      initializedAudioInput = true;
-      initAudioInput(index);
-    }
+    // if (!initializedAudioInput) {
+    //   initializedAudioInput = true;
+    //   initAudioInput(index);
+    // }
 
     const currentSet = setup[index]
 
@@ -103,10 +106,6 @@ function onStop(index) {
 
   currentIndex = -1;
   currentIdFreqs = null;
-}
-
-function onResize() {
-  const contRect = canvasContainer.getBoundingClientRect();
 }
 
 function displaySpectrum(array) {
@@ -198,9 +197,9 @@ function main() {
 
   selectorButtons.enable();
 
-  window.addEventListener('resize', onResize);
-
+  welcomeOverlay = document.getElementById('welcome-overlay');
   errorOverlay = document.getElementById('error-overlay');
+  setupOverlay('welcome', false, initAudioInput);
   setupOverlay('help');
   setupOverlay('info');
 }

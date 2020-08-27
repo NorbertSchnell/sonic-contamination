@@ -127,6 +127,7 @@ a {
   left: 7%;
   background-image: url('images/corona.png');
   background-size: contain;
+  border-style: none;
 }
 
 #help-button {
@@ -154,10 +155,13 @@ a {
   pointer-events: none;
   padding: 100px 2em;
   box-sizing: border-box;
-  font-size: 1.2em;
   transition-property: opacity;
   transition-duration: 0.5s;
   z-index: 99;
+}
+
+.overlay p {
+  font-size: 1.1em;
 }
 
 .overlay a {
@@ -177,6 +181,19 @@ a {
 .overlay.open {
   opacity: 0.9;
   pointer-events: auto;
+}
+
+#welcome-overlay {
+  padding: 25% 0 0 0;
+  text-align: center;
+}
+
+#welcome-overlay p {
+  margin: 3em;
+}
+
+#welcome-overlay.open {
+  opacity: 1;
 }
 
 #error-overlay {}
