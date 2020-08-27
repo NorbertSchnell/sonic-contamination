@@ -17,6 +17,7 @@ let welcomeOverlay = null;
 let errorOverlay = null;
 let currentIndex = -1;
 let currentIdFreqs = null;
+let frameCount = 0;
 
 const audioContext = audio.audioContext;
 let stream = null;
@@ -63,19 +64,15 @@ function decibelToPower(val) {
 function initAudioInput() {
   Promise.all([resumeAudioContext(), setupAudioInput()])
     .then(([undefined, stream]) => {
-      analyser = new SpectrumAnalyser(fftSize, idFreqs, 0.2, updateSpectrum);
+      analyser = new SpectrumAnalyser(fftSize, idFreqs, 0.2, onSpectrum);
       analyser.start();
 
       const mediaStreamSource = audioContext.createMediaStreamSource(stream);
       mediaStreamSource.connect(analyser.input);
 
-      welcomeOverlay.classList.remove('open');      
+      welcomeOverlay.classList.remove('open');
     })
     .catch((err) => {
-      // idSynth.stop();
-      // reSynth.stop();
-      // selectorButtons.deselect();
-
       errorOverlay.innerHTML = `Oops, ${err} (${err.stack}).`;
       errorOverlay.classList.add('open');
     });
@@ -85,16 +82,11 @@ function onStart(index) {
   if (index !== currentIndex) {
     onStop(currentIndex);
 
-    // if (!initializedAudioInput) {
-    //   initializedAudioInput = true;
-    //   initAudioInput(index);
-    // }
+    frameCount = 0;
 
-    const currentSet = setup[index]
-
+    const currentSet = setup[index];
     idSynth.start(currentSet.id, 0.1);
     reSynth.start(currentSet.re, 0);
-
     currentIndex = index;
     currentIdFreqs = currentSet.id;
   }
@@ -103,7 +95,6 @@ function onStart(index) {
 function onStop(index) {
   idSynth.stop();
   reSynth.stop();
-
   currentIndex = -1;
   currentIdFreqs = null;
 }
@@ -155,23 +146,27 @@ function displayPeaks(peaks) {
   }
 }
 
-function updateSpectrum(array, peaks) {
+function onSpectrum(array, peaks) {
   if (!runningOnMobile) {
     displaySpectrum(array);
     displayPeaks(peaks);
   }
 
-  let power = 0;
+  if (frameCount > 2) {
+    let power = 0;
 
-  for (let peak of peaks) {
-    const freq = peak.freq;
+    for (let peak of peaks) {
+      const freq = peak.freq;
 
-    if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1]))
-      power += decibelToPower(peak.level);
+      if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1]))
+        power += decibelToPower(peak.level);
+    }
+
+    const amp = Math.max(0, Math.min(0.5, 1000 * Math.sqrt(power)));
+    reSynth.gain = amp;
   }
 
-  const amp = Math.max(0, Math.min(0.5, 1000 * Math.sqrt(power)));
-  reSynth.gain = amp;
+  frameCount++;
 }
 
 function main() {
