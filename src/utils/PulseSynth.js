@@ -2,7 +2,7 @@ import { default as audio } from 'waves-audio';
 
 const audioContext = audio.audioContext;
 
-class QuadSynth {
+class PulseSynth {
   constructor() {
     this._oscs = null;
     this._mods = null;
@@ -48,7 +48,7 @@ class QuadSynth {
         const lfo = audioContext.createOscillator();
         lfo.connect(mod.gain);
         lfo.type = 'sine';
-        lfo.frequency.value = 1 + 1 * Math.random();
+        lfo.frequency.value = 0.5 + 0.5 * Math.random();
         lfo.start(time);
 
         const osc = audioContext.createOscillator();
@@ -88,4 +88,4 @@ class QuadSynth {
   };
 }
 
-export default QuadSynth;
+export default PulseSynth;

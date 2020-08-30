@@ -4,9 +4,10 @@ import MobileDetect from 'mobile-detect';
 import SelectorButtons from './utils/SelectorButtons';
 import ToneSynth from './utils/ToneSynth';
 import PulseSynth from './utils/PulseSynth';
+import ClickSynth from './utils/ClickSynth';
 import SpectrumAnalyser from './utils/SpectrumAnalyser';
 import { setupOverlay, resumeAudioContext, setupAudioInput } from './utils/helpers';
-import { default as setup } from './setup';
+import {ids, clusters} from './setup';
 
 let os = null;
 let runningOnMobile = true;
@@ -34,17 +35,6 @@ let renderer = null;
 
 const fftSize = 2048;
 
-let idFreqs = [];
-
-for (let s of setup) {
-  for (let freq of s.id)
-    idFreqs.push(freq);
-}
-
-idFreqs.sort((a, b) => a - b);
-
-console.log(idFreqs);
-
 function linearToDecibel(val) {
   return 8.685889638065035 * Math.log(val); // 20 * log10(val)
 };
@@ -64,7 +54,7 @@ function decibelToPower(val) {
 function initAudioInput() {
   Promise.all([resumeAudioContext(), setupAudioInput()])
     .then(([undefined, stream]) => {
-      analyser = new SpectrumAnalyser(fftSize, idFreqs, 0.2, onSpectrum);
+      analyser = new SpectrumAnalyser(fftSize, ids, 0.2, onSpectrum);
       analyser.start();
 
       const mediaStreamSource = audioContext.createMediaStreamSource(stream);
@@ -84,11 +74,11 @@ function onStart(index) {
 
     frameCount = 0;
 
-    const currentSet = setup[index];
-    idSynth.start(currentSet.id, 0.1);
-    reSynth.start(currentSet.re, 0);
+    const currentCluster = clusters[index];
+    idSynth.start(currentCluster.id, 0.1);
+    reSynth.start(0.4, 1, 0);
     currentIndex = index;
-    currentIdFreqs = currentSet.id;
+    currentIdFreqs = currentCluster.id;
   }
 }
 
@@ -131,7 +121,7 @@ function displayPeaks(peaks) {
   for (let peak of peaks) {
     const freq = peak.freq;
 
-    if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1]))
+    if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1] && freq !== currentIdFreqs[2]))
       ctx.strokeStyle = '#f00';
     else
       ctx.strokeStyle = '#0f0';
@@ -152,18 +142,21 @@ function onSpectrum(array, peaks) {
     displayPeaks(peaks);
   }
 
-  if (frameCount > 2) {
+  if (frameCount > 4) {
     let power = 0;
 
     for (let peak of peaks) {
       const freq = peak.freq;
 
-      if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1]))
+      if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1] && freq !== currentIdFreqs[2]))
         power += decibelToPower(peak.level);
     }
 
-    const amp = Math.max(0, Math.min(0.2, 1000 * Math.sqrt(power)));
+    const amp = Math.max(0, Math.min(0.4, 1000 * Math.sqrt(power)));
     reSynth.gain = amp;
+
+    const period = Math.max(1, Math.min(4, 1000 * Math.sqrt(power)));
+    reSynth.period = period;
   }
 
   frameCount++;
@@ -181,13 +174,13 @@ function main() {
   canvas.height = analyserMax - analyserMin;
 
   idSynth = new PulseSynth();
-  reSynth = new ToneSynth();
+  reSynth = new ClickSynth();
 
   selectorButtons = new SelectorButtons('button-container', onStart, onStop);
 
-  for (let i = 0; i < setup.length; i++) {
-    const s = setup[i];
-    const label = `${s.model}.${s.device} (${s.id[0]}+${s.id[1]})`;
+  for (let i = 0; i < clusters.length; i++) {
+    const s = clusters[i];
+    const label = `${s.id[0]} ${s.id[1]} ${s.id[2]}`;
     selectorButtons.add(label);
   }
 

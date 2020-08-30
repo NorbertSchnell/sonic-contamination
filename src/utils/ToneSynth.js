@@ -2,7 +2,7 @@ import { default as audio } from 'waves-audio';
 
 const audioContext = audio.audioContext;
 
-class QuadSynth {
+class ToneSynth {
   constructor() {
     this._oscs = null;
     this._gain = null;
@@ -67,4 +67,4 @@ class QuadSynth {
   };
 }
 
-export default QuadSynth;
+export default ToneSynth;
