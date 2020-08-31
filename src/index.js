@@ -15,15 +15,22 @@ const numRefTones = 2;
 const refSynthAmp = 0.05;
 const reSynthAmp = 0.1;
 const analysisFramePeriod = 0.2;
+const offTime = 1;
+const fadeTime = 0.5;
+const numRefFreqs = refFreqs.length;
+const refFreqIndices = new Map();
+const refFreqIntensity = [];
+let contaminationGrade = 0;
+let freeRefFreqs = [...refFreqs];
+let currentRefFreqs = [];
 
 let initializedAudioInput = false;
 let welcomeOverlay = null;
 let errorOverlay = null;
 let output = null;
-let freeRefFreqs = [...refFreqs];
-let currentRefFreqs = [];
-let fadingFreq = null;
-let frameCount = 0;
+let inFadingFreq = null;
+let outFadingFreq = null;
+let changeTime = 0;
 
 const audioContext = audio.audioContext;
 let stream = null;
@@ -36,7 +43,7 @@ const analyserScale = 1 / (analyserMax - analyserMin);
 
 let canvasContainer = null;
 let canvas = null;
-let renderer = null;
+let title = null;
 
 const fftSize = 2048;
 
@@ -60,6 +67,7 @@ function initAudioInput() {
   Promise.all([resumeAudioContext(), setupAudioInput()])
     .then(([undefined, stream]) => {
       initSynth();
+      initAnimation();
 
       analyser = new SpectrumAnalyser(fftSize, refFreqs, analysisFramePeriod, onAnalysisFrame);
       analyser.start();
@@ -85,6 +93,9 @@ function initSynth() {
 
     const synth = new PulseSynth(freq, refSynthAmp, output);
     refSynths.set(freq, synth);
+
+    refFreqIndices.set(freq, i);
+    refFreqIntensity.push(0);
   }
 
   const f11 = 3000 + 6000 * Math.random();
@@ -93,7 +104,6 @@ function initSynth() {
   const f22 = f21 + 100 * Math.random();
   const cluster = [f11, f12, f21, f22]
   reSynth = new ClusterSynth(cluster, audioContext.destination);
-  frameCount = 0;
 }
 
 function changeFrequency() {
@@ -111,43 +121,132 @@ function changeFrequency() {
   const newSynth = new PulseSynth(newFreq, refSynthAmp, output);
   refSynths.set(newFreq, newSynth);
 
-  fadingFreq = oldFreq;
-  frameCount = 0;
+  changeTime = audioContext.currentTime;
+  inFadingFreq = newFreq;
+  outFadingFreq = oldFreq;
 }
 
 function forgetFrequency() {
-  refSynths.delete(fadingFreq);
-  freeRefFreqs.push(fadingFreq);
-  fadingFreq = null;
+  refSynths.delete(outFadingFreq);
+  freeRefFreqs.push(outFadingFreq);
+  inFadingFreq = null;
+  outFadingFreq = null;
+}
+
+function initAnimation() {
+  requestAnimationFrame(drawAnimation);
+}
+
+function drawAnimation() {
+  const time = audioContext.currentTime;
+  const ctx = canvas.getContext('2d');
+  const size = canvas.width;
+  const l = size / 2;
+
+  ctx.clearRect(0, 0, size, size);
+
+  const maxOpacity = 0.5;
+  const goodColor = '#fff';
+  const badColor = '#15f4ee';
+  //const badColor = '#ffa500';
+  const ringGap = 0.03 * l;
+  const centerRadius = 0.3 * l;
+  const innerRingRadius = centerRadius + ringGap;
+  const maxRingRadius = 0.74 * l;
+  const maxRingThinkness = maxRingRadius - innerRingRadius;
+  let startAngle = 0;
+  let deltaAngle = 2 * Math.PI / numRefFreqs;
+  let innerRingGapAngle = Math.asin(ringGap / innerRingRadius);
+  let outerRingGapAngle, outerRingRadius;
+
+  ctx.fillStyle = '#fff';
+  ctx.globalAlpha = 0.1;
+
+  ctx.beginPath();
+  ctx.arc(l, l, centerRadius - ringGap, 0, 2 * Math.PI, false);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = badColor;
+  ctx.globalAlpha = maxOpacity * contaminationGrade;
+
+  ctx.beginPath();
+  ctx.arc(l, l, centerRadius - ringGap, 0, 2 * Math.PI, false);
+  ctx.closePath();
+  ctx.fill(); 
+
+  for (let i = 0; i < numRefFreqs; i++) {
+    const endAngle = startAngle + deltaAngle;
+    const freq = refFreqs[i];
+    const fade = Math.min(1, (time - changeTime) / fadeTime);
+    let ring = 0;
+
+    if (freq == inFadingFreq) {
+      ctx.fillStyle = goodColor;
+      ctx.globalAlpha = maxOpacity * fade;
+      outerRingRadius = innerRingRadius + maxRingThinkness * fade;
+    } else if (freq == outFadingFreq) {
+      ctx.fillStyle = goodColor;
+      ctx.globalAlpha = maxOpacity * (1 - fade);
+      outerRingRadius = innerRingRadius + maxRingThinkness * (1 - fade);
+    } else if (currentRefFreqs.indexOf(freq) >= 0) {
+      ctx.fillStyle = goodColor;
+      ctx.globalAlpha = maxOpacity;
+      outerRingRadius = innerRingRadius + maxRingThinkness;
+    } else {
+      const intensity = refFreqIntensity[i];
+      ctx.fillStyle = badColor;
+      ctx.globalAlpha = maxOpacity * intensity;      
+      outerRingRadius = innerRingRadius + maxRingThinkness * intensity;
+    }
+
+    outerRingGapAngle = Math.asin(ringGap / outerRingRadius);
+
+    ctx.beginPath();
+    ctx.arc(l, l, outerRingRadius, startAngle + outerRingGapAngle, endAngle - outerRingGapAngle, false);
+    ctx.arc(l, l, innerRingRadius, endAngle - innerRingGapAngle, startAngle + innerRingGapAngle, true);
+    ctx.closePath();
+    ctx.fill();
+
+    startAngle = endAngle;
+    endAngle = startAngle + deltaAngle;
+  }
+
+  requestAnimationFrame(drawAnimation);
 }
 
 function onAnalysisFrame(array, peaks) {
-  if (!runningOnMobile) {
-    displaySpectrum(array);
-    displayPeaks(peaks);
-  }
+  const time = audioContext.currentTime;
 
-  if (frameCount > 4) {
-    if (fadingFreq !== null)
+  // if (!runningOnMobile) {
+  //   displaySpectrum(array);
+  //   displayPeaks(peaks);
+  // }
+
+  if (time - changeTime >= offTime) {
+    if (outFadingFreq !== null)
       forgetFrequency();
 
     if (Math.random() < 0.05)
       changeFrequency();
   }
 
-  let power = 0;
+  let maxIntensity = 0;
 
-  for (let peak of peaks) {
+  for (let i = 0; i < peaks.length; i++) {
+    const peak = peaks[i];
     const freq = peak.freq;
+    const peakPower = decibelToPower(peak.level);
+    const peakIntensity = Math.min(1, 10000 * Math.sqrt(peakPower));
 
-    if (currentRefFreqs.indexOf(freq) < 0 && freq !== fadingFreq)
-      power += decibelToPower(peak.level);
+    if (currentRefFreqs.indexOf(freq) < 0 && freq !== outFadingFreq)
+      maxIntensity = Math.max(maxIntensity, peakIntensity);
+
+    refFreqIntensity[i] = peakIntensity;
   }
 
-  const p = reSynthAmp * 1000 * Math.sqrt(power);
-  reSynth.amp = Math.max(0, Math.min(reSynthAmp, p));
-
-  frameCount++;
+  contaminationGrade = maxIntensity;
+  reSynth.amp = reSynthAmp * maxIntensity;
 }
 
 function displaySpectrum(array) {
@@ -182,7 +281,7 @@ function displayPeaks(peaks) {
   for (let peak of peaks) {
     const freq = peak.freq;
 
-    if (freq === fadingFreq)
+    if (freq === outFadingFreq)
       ctx.strokeStyle = '#00f';
     else if (currentRefFreqs.indexOf(freq) >= 0)
       ctx.strokeStyle = '#0f0';
@@ -199,6 +298,18 @@ function displayPeaks(peaks) {
   }
 }
 
+function onResize() {
+  const contRect = canvasContainer.getBoundingClientRect();
+  const width = contRect.width;
+  const height = contRect.height;
+  const size = Math.min(width, height);
+
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.top = `${(height - size) / 2}px`;
+  canvas.style.left = `${(width - size) / 2}px`;
+}
+
 function main() {
   const ua = window.navigator.userAgent;
   const md = new MobileDetect(ua);
@@ -207,13 +318,15 @@ function main() {
   runningOnMobile = (os === 'AndroidOS' || os === 'iOS');
 
   canvasContainer = document.getElementById('canvas-container');
-  canvas = document.getElementById('spectrum-canvas');
-  canvas.height = analyserMax - analyserMin;
+  canvas = document.getElementById('canvas');
+  title = document.getElementById('title');
+  onResize();
+
+  window.addEventListener('resize', onResize);
 
   welcomeOverlay = document.getElementById('welcome-overlay');
   errorOverlay = document.getElementById('error-overlay');
   setupOverlay('welcome', false, initAudioInput);
-  setupOverlay('help');
   setupOverlay('info');
 }
 
