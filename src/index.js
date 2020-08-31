@@ -2,26 +2,32 @@ import '@babel/polyfill';
 import { default as audio } from 'waves-audio';
 import MobileDetect from 'mobile-detect';
 import ToneSynth from './utils/ToneSynth';
+import PulseSynth from './utils/PulseSynth';
 import ClusterSynth from './utils/ClusterSynth';
 import SpectrumAnalyser from './utils/SpectrumAnalyser';
 import { setupOverlay, resumeAudioContext, setupAudioInput } from './utils/helpers';
-import { idFreqs } from './setup';
+import { refFreqs } from './setup';
 
 let os = null;
 let runningOnMobile = true;
+
+const numRefTones = 2;
+const refSynthAmp = 0.05;
+const reSynthAmp = 0.1;
+const analysisFramePeriod = 0.2;
 
 let initializedAudioInput = false;
 let welcomeOverlay = null;
 let errorOverlay = null;
 let output = null;
-let freeIdFreqs = [...idFreqs];
-let currentIdFreqs = [];
+let freeRefFreqs = [...refFreqs];
+let currentRefFreqs = [];
 let fadingFreq = null;
 let frameCount = 0;
 
 const audioContext = audio.audioContext;
 let stream = null;
-let idSynths = new Map();
+let refSynths = new Map();
 let reSynth = null;
 let analyser = null;
 const analyserMin = -120;
@@ -55,7 +61,7 @@ function initAudioInput() {
     .then(([undefined, stream]) => {
       initSynth();
 
-      analyser = new SpectrumAnalyser(fftSize, idFreqs, 0.2, onAnalysisFrame);
+      analyser = new SpectrumAnalyser(fftSize, refFreqs, analysisFramePeriod, onAnalysisFrame);
       analyser.start();
 
       const mediaStreamSource = audioContext.createMediaStreamSource(stream);
@@ -72,13 +78,13 @@ function initAudioInput() {
 function initSynth() {
   output = audioContext.destination;
 
-  for (let i = 0; i < 3; i++) {
-    const index = Math.floor(freeIdFreqs.length * Math.random());
-    const [freq] = freeIdFreqs.splice(index, 1);
-    currentIdFreqs.push(freq);
+  for (let i = 0; i < numRefTones; i++) {
+    const index = Math.floor(freeRefFreqs.length * Math.random());
+    const [freq] = freeRefFreqs.splice(index, 1);
+    currentRefFreqs.push(freq);
 
-    const synth = new ToneSynth(freq, 0.1, output);
-    idSynths.set(freq, synth);
+    const synth = new PulseSynth(freq, refSynthAmp, output);
+    refSynths.set(freq, synth);
   }
 
   const f11 = 3000 + 6000 * Math.random();
@@ -91,32 +97,32 @@ function initSynth() {
 }
 
 function changeFrequency() {
-  const oldIndex = Math.floor(currentIdFreqs.length * Math.random());
-  const [oldFreq] = currentIdFreqs.splice(oldIndex, 1);
+  const oldIndex = Math.floor(currentRefFreqs.length * Math.random());
+  const [oldFreq] = currentRefFreqs.splice(oldIndex, 1);
 
-  const newIndex = Math.floor(freeIdFreqs.length * Math.random());
-  const [newFreq] = freeIdFreqs.splice(newIndex, 1);
+  const newIndex = Math.floor(freeRefFreqs.length * Math.random());
+  const [newFreq] = freeRefFreqs.splice(newIndex, 1);
 
-  currentIdFreqs.push(newFreq);
+  currentRefFreqs.push(newFreq);
 
-  const oldSynth = idSynths.get(oldFreq);
+  const oldSynth = refSynths.get(oldFreq);
   oldSynth.stop();
 
-  const newSynth = new ToneSynth(newFreq, 0.1, output);
-  idSynths.set(newFreq, newSynth);
+  const newSynth = new PulseSynth(newFreq, refSynthAmp, output);
+  refSynths.set(newFreq, newSynth);
 
   fadingFreq = oldFreq;
   frameCount = 0;
 }
 
 function forgetFrequency() {
-  idSynths.delete(fadingFreq);
-  freeIdFreqs.push(fadingFreq);
+  refSynths.delete(fadingFreq);
+  freeRefFreqs.push(fadingFreq);
   fadingFreq = null;
 }
 
 function onAnalysisFrame(array, peaks) {
-  if (!runningOnMobile) {
+  if (true || !runningOnMobile) {
     displaySpectrum(array);
     displayPeaks(peaks);
   }
@@ -134,12 +140,12 @@ function onAnalysisFrame(array, peaks) {
   for (let peak of peaks) {
     const freq = peak.freq;
 
-    if (currentIdFreqs.indexOf(freq) < 0 && freq !== fadingFreq)
+    if (currentRefFreqs.indexOf(freq) < 0 && freq !== fadingFreq)
       power += decibelToPower(peak.level);
   }
 
-  const p = 1000 * Math.sqrt(power);
-  reSynth.amp = Math.max(0, Math.min(0.3, p));
+  const p = reSynthAmp * 1000 * Math.sqrt(power);
+  reSynth.amp = Math.max(0, Math.min(reSynthAmp, p));
 
   frameCount++;
 }
@@ -178,7 +184,7 @@ function displayPeaks(peaks) {
 
     if (freq === fadingFreq)
       ctx.strokeStyle = '#00f';
-    else if (currentIdFreqs.indexOf(freq) >= 0)
+    else if (currentRefFreqs.indexOf(freq) >= 0)
       ctx.strokeStyle = '#0f0';
     else
       ctx.strokeStyle = '#f00';

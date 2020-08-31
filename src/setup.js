@@ -1,4 +1,4 @@
-const idFreqs = [
+const refFreqs = [
   432,
   656,
   880,
@@ -7,4 +7,4 @@ const idFreqs = [
   1548,
 ];
 
-export { idFreqs };
+export { refFreqs };
