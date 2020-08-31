@@ -5,26 +5,41 @@ const audioContext = audio.audioContext;
 const fadeTime = 0.1;
 
 class ClickSynth {
-  constructor() {
-    this.buffer = null;
+  constructor(output) {
+    this.output = output;
 
     this._src = null;
     this._gain = null;
 
-    this._amp = 1;
+    this._amp = 0;
     this._period = 1;
     this._speed = 1;
 
-    this.load();
-  }
-
-  load() {
     new loaders.AudioBufferLoader()
-      .load('sounds/click-6000.wav')
-      .then((buffer) => this.buffer = buffer);
+      .load('sounds/click.wav')
+      .then((buffer) => {
+        const time = audioContext.currentTime;
+
+        const gain = audioContext.createGain();
+        gain.connect(this.output);
+        gain.gain.value = 0;
+
+        const src = audioContext.createBufferSource();
+        src.connect(gain);
+        src.buffer = buffer;
+        src.playbackRate.value = 1;
+        src.start(time);
+        src.loop = true;
+        src.loopStart = 0;
+        src.loopEnd = 1;
+
+        this._src = src;
+        this._gain = gain;
+      });
   }
 
-  set gain(value) {
+  set amp(value) {
+    const time = audioContext.currentTime;
     const gain = this._gain;
 
     if (gain) {
@@ -40,7 +55,15 @@ class ClickSynth {
     const src = this._src;
 
     if (src) {
-      src.playbackRate.value = value;
+      src.loopEnd = value;
+    }
+  }
+
+  set freq(value) {
+    const src = this._src;
+
+    if (src) {
+      src.loopEnd = 1 / value;
     }
   }
 
@@ -52,41 +75,14 @@ class ClickSynth {
     }
   }
 
-  start(period = this._period, speed = this._speed, amp = this._amp) {
-    if (this._src === null) {
-      const time = audioContext.currentTime;
-
-      const gain = audioContext.createGain();
-      gain.connect(audioContext.destination);
-      gain.gain.value = 0;
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(amp, time + fadeTime);
-
-      const src = audioContext.createBufferSource();
-      src.connect(gain);
-      src.buffer = this.buffer;
-      src.playbackRate.value = speed;
-      src.loop = true;
-      src.loopStart = 0;
-      src.loopEnd = period;
-      src.start(time);
-
-      this._src = src;
-      this._gain = gain;
-    }
-  };
-
   stop() {
-    if (this._src !== null) {
-      const time = audioContext.currentTime;
+    const time = audioContext.currentTime;
 
-      this._gain.gain.setValueAtTime(this._amp, time);
-      this._gain.gain.linearRampToValueAtTime(0, time + fadeTime);
-      this._src.stop(time + fadeTime);
+    this._gain.value = 0;
+    this._src.stop(time);
 
-      this._src = null;
-      this._gain = null;
-    }
+    this._src = null;
+    this._gain = null;
   };
 }
 

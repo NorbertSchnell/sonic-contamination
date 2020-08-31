@@ -1,28 +1,27 @@
 import '@babel/polyfill';
 import { default as audio } from 'waves-audio';
 import MobileDetect from 'mobile-detect';
-import SelectorButtons from './utils/SelectorButtons';
 import ToneSynth from './utils/ToneSynth';
-import PulseSynth from './utils/PulseSynth';
-import ClickSynth from './utils/ClickSynth';
+import ClusterSynth from './utils/ClusterSynth';
 import SpectrumAnalyser from './utils/SpectrumAnalyser';
 import { setupOverlay, resumeAudioContext, setupAudioInput } from './utils/helpers';
-import {ids, clusters} from './setup';
+import { idFreqs } from './setup';
 
 let os = null;
 let runningOnMobile = true;
 
-let selectorButtons = null;
 let initializedAudioInput = false;
 let welcomeOverlay = null;
 let errorOverlay = null;
-let currentIndex = -1;
-let currentIdFreqs = null;
+let output = null;
+let freeIdFreqs = [...idFreqs];
+let currentIdFreqs = [];
+let fadingFreq = null;
 let frameCount = 0;
 
 const audioContext = audio.audioContext;
 let stream = null;
-let idSynth = null;
+let idSynths = new Map();
 let reSynth = null;
 let analyser = null;
 const analyserMin = -120;
@@ -54,7 +53,9 @@ function decibelToPower(val) {
 function initAudioInput() {
   Promise.all([resumeAudioContext(), setupAudioInput()])
     .then(([undefined, stream]) => {
-      analyser = new SpectrumAnalyser(fftSize, ids, 0.2, onSpectrum);
+      initSynth();
+
+      analyser = new SpectrumAnalyser(fftSize, idFreqs, 0.2, onAnalysisFrame);
       analyser.start();
 
       const mediaStreamSource = audioContext.createMediaStreamSource(stream);
@@ -68,25 +69,79 @@ function initAudioInput() {
     });
 }
 
-function onStart(index) {
-  if (index !== currentIndex) {
-    onStop(currentIndex);
+function initSynth() {
+  output = audioContext.destination;
 
-    frameCount = 0;
+  for (let i = 0; i < 3; i++) {
+    const index = Math.floor(freeIdFreqs.length * Math.random());
+    const [freq] = freeIdFreqs.splice(index, 1);
+    currentIdFreqs.push(freq);
 
-    const currentCluster = clusters[index];
-    idSynth.start(currentCluster.id, 0.1);
-    reSynth.start(0.4, 1, 0);
-    currentIndex = index;
-    currentIdFreqs = currentCluster.id;
+    const synth = new ToneSynth(freq, 0.1, output);
+    idSynths.set(freq, synth);
   }
+
+  const f11 = 3000 + 6000 * Math.random();
+  const f12 = f11 + 100 * Math.random();
+  const f21 = 3000 + 6000 * Math.random();
+  const f22 = f21 + 100 * Math.random();
+  const cluster = [f11, f12, f21, f22]
+  reSynth = new ClusterSynth(cluster, audioContext.destination);
+  frameCount = 0;
 }
 
-function onStop(index) {
-  idSynth.stop();
-  reSynth.stop();
-  currentIndex = -1;
-  currentIdFreqs = null;
+function changeFrequency() {
+  const oldIndex = Math.floor(currentIdFreqs.length * Math.random());
+  const [oldFreq] = currentIdFreqs.splice(oldIndex, 1);
+
+  const newIndex = Math.floor(freeIdFreqs.length * Math.random());
+  const [newFreq] = freeIdFreqs.splice(newIndex, 1);
+
+  currentIdFreqs.push(newFreq);
+
+  const oldSynth = idSynths.get(oldFreq);
+  oldSynth.stop();
+
+  const newSynth = new ToneSynth(newFreq, 0.1, output);
+  idSynths.set(newFreq, newSynth);
+
+  fadingFreq = oldFreq;
+  frameCount = 0;
+}
+
+function forgetFrequency() {
+  idSynths.delete(fadingFreq);
+  freeIdFreqs.push(fadingFreq);
+  fadingFreq = null;
+}
+
+function onAnalysisFrame(array, peaks) {
+  if (!runningOnMobile) {
+    displaySpectrum(array);
+    displayPeaks(peaks);
+  }
+
+  if (frameCount > 4) {
+    if (fadingFreq !== null)
+      forgetFrequency();
+
+    if (Math.random() < 0.05)
+      changeFrequency();
+  }
+
+  let power = 0;
+
+  for (let peak of peaks) {
+    const freq = peak.freq;
+
+    if (currentIdFreqs.indexOf(freq) < 0 && freq !== fadingFreq)
+      power += decibelToPower(peak.level);
+  }
+
+  const p = 1000 * Math.sqrt(power);
+  reSynth.amp = Math.max(0, Math.min(0.3, p));
+
+  frameCount++;
 }
 
 function displaySpectrum(array) {
@@ -121,10 +176,12 @@ function displayPeaks(peaks) {
   for (let peak of peaks) {
     const freq = peak.freq;
 
-    if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1] && freq !== currentIdFreqs[2]))
-      ctx.strokeStyle = '#f00';
-    else
+    if (freq === fadingFreq)
+      ctx.strokeStyle = '#00f';
+    else if (currentIdFreqs.indexOf(freq) >= 0)
       ctx.strokeStyle = '#0f0';
+    else
+      ctx.strokeStyle = '#f00';
 
     const x = peak.bin;
     const y = analyserScale * (peak.level - analyserMin);
@@ -134,32 +191,6 @@ function displayPeaks(peaks) {
     ctx.lineTo(x, canvas.height * (1 - y));
     ctx.stroke();
   }
-}
-
-function onSpectrum(array, peaks) {
-  if (!runningOnMobile) {
-    displaySpectrum(array);
-    displayPeaks(peaks);
-  }
-
-  if (frameCount > 4) {
-    let power = 0;
-
-    for (let peak of peaks) {
-      const freq = peak.freq;
-
-      if (!currentIdFreqs || (freq !== currentIdFreqs[0] && freq !== currentIdFreqs[1] && freq !== currentIdFreqs[2]))
-        power += decibelToPower(peak.level);
-    }
-
-    const amp = Math.max(0, Math.min(0.4, 1000 * Math.sqrt(power)));
-    reSynth.gain = amp;
-
-    const period = Math.max(1, Math.min(4, 1000 * Math.sqrt(power)));
-    reSynth.period = period;
-  }
-
-  frameCount++;
 }
 
 function main() {
@@ -172,19 +203,6 @@ function main() {
   canvasContainer = document.getElementById('canvas-container');
   canvas = document.getElementById('spectrum-canvas');
   canvas.height = analyserMax - analyserMin;
-
-  idSynth = new PulseSynth();
-  reSynth = new ClickSynth();
-
-  selectorButtons = new SelectorButtons('button-container', onStart, onStop);
-
-  for (let i = 0; i < clusters.length; i++) {
-    const s = clusters[i];
-    const label = `${s.id[0]} ${s.id[1]} ${s.id[2]}`;
-    selectorButtons.add(label);
-  }
-
-  selectorButtons.enable();
 
   welcomeOverlay = document.getElementById('welcome-overlay');
   errorOverlay = document.getElementById('error-overlay');
