@@ -122,7 +122,7 @@ function forgetFrequency() {
 }
 
 function onAnalysisFrame(array, peaks) {
-  if (true || !runningOnMobile) {
+  if (!runningOnMobile) {
     displaySpectrum(array);
     displayPeaks(peaks);
   }
