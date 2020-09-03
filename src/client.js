@@ -118,7 +118,8 @@ function stopSynth() {
   for (let [freq, synth] of refSynths)
     synth.stop();
 
-  reSynth.stop();
+  if (reSynth)
+    reSynth.stop();
 }
 
 function startAnalysis() {
@@ -127,7 +128,8 @@ function startAnalysis() {
 }
 
 function stopAnalysis() {
-  analyser.stop();
+  if (analyser)
+    analyser.stop();
 }
 
 function changeFrequency() {
