@@ -2,7 +2,7 @@
 const baseURL = 'http://localhost:3000/';
 
 async function getControl(param) {
-  const url = baseURL + 'control/' + param;
+  const url = baseURL + '/control/' + param;
   const response = await (fetch(url, { method: 'GET' }).catch(() => {
     return Promise.reject(new Error('cannot set control on server'));    
   }));
