@@ -3,25 +3,6 @@ import motionInput from 'motion-input';
 
 const audioContext = audio.audioContext;
 
-function setupOverlay(id, hasButton = true, callback = null) {
-  const overlay = document.getElementById(`${id}-overlay`);
-  overlay.addEventListener('click', () => {
-    if (callback)
-      callback();
-    else
-      overlay.classList.remove('open');
-  });
-
-  if (hasButton) {
-    const button = document.getElementById(`${id}-button`);
-    button.addEventListener('click', () => overlay.classList.add('open'));
-  } else {
-    overlay.classList.add('open');
-  }
-
-  return overlay;
-}
-
 function setupMotionInput(moduleName) {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -87,4 +68,4 @@ function resumeAudioContext() {
   }
 }
 
-export { setupOverlay, setupMotionInput, setupAudioInput, resumeAudioContext };
+export { setupMotionInput, setupAudioInput, resumeAudioContext };

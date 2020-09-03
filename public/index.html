@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="./images/favicon.png">
   <style>:root { --bg-color: #666; }</style>
   <link rel='stylesheet' href='./styles.css' />
-  <script src="./index.js"></script>
+  <script src="./client.js"></script>
 </head>
 
 <body ontouchstart="">
@@ -26,17 +26,27 @@
   </div>
 
   <!-- error overlay -->
-  <div id="welcome-overlay" class="overlay open">
+  <div id="welcome-overlay" class="overlay cover open">
     <h1>Sonic Contamination</h1>
-    <p>Please touch the screen to start...</p>
+    <p>Please touch the screen<br /> to start...</p>
   </div>
 
-  <div id="error-overlay" class="overlay"></div>
+  <div id="end-overlay" class="overlay cover">
+    <h1>Sonic Contamination</h1>
+    <p>Please take your seat, the performance now continues on stage...</p>
+  </div>
 
   <!-- info overlay -->
   <div id="info-overlay" class="overlay close-cross">
+    <h1>Sonic Contamination</h1>
     <p>Vestibulum tempor metus sem, nec gravida purus fermentum ac. Etiam egestas quam vitae dictum hendrerit. Vestibulum faucibus volutpat orci nec laoreet. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec vel tortor sit amet diam viverra lobortis. Vivamus posuere nec purus blandit egestas.</p>
   </div>
-</body>
+
+  <div id="error-overlay" class="overlay cover">
+    <h1>Sonic Contamination</h1>
+    <img id="error-icon" src="./images/error.png" width="200" height="200">
+    <div class="content"></div>
+  </div>
+  </body>
 
 </html>

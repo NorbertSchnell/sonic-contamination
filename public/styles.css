@@ -7,6 +7,11 @@ body {
   height: 100%;
   width: 100%;
   margin: 0;
+  box-sizing: border-box;
+  padding-left: 2em;
+  padding-right: 2em;
+  padding-top: 1em;
+  padding-bottom: 1em;
   color: #fff;
   background-color: var(--bg-color);
   font-family: 'Avenir', 'Lato', 'Helvetica Neue', 'Helvetica', sans-serif;
@@ -20,10 +25,11 @@ h1 {
   margin-block-end: 0;
   margin-inline-start: 0;
   margin-inline-end: 0;
-  font-size: 1.5em;
+  font-size: 1.2em;
   font-weight: 300;
   letter-spacing: 0.1em;
-  margin: 1em;
+  margin-top: 1em;
+  margin-bottom: 1em;
   text-align: center;
   text-transform: uppercase;
   user-select: none;
@@ -86,12 +92,14 @@ a {
 }
 
 header {
-  position: fixed;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 footer {
   position: fixed;
   width: 100%;
+  left: 0;
   bottom: 0;
   height: 5.5em;
 }
@@ -121,6 +129,7 @@ footer {
   left: 7%;
   background-image: url('images/corona.png');
   background-size: contain;
+  background-color: rgba(0, 0, 0, 0);
   border-style: none;
 }
 
@@ -130,24 +139,40 @@ footer {
   right: 7%;
 }
 
+.switch {
+  position: absolute;
+  width: 200px;
+  height: 100px;
+  left: 50%;
+  top: 50%;
+  margin-left: -100px;
+  margin-top: -50px;
+  text-align: center;
+  font-size: 50px;
+}
+
 .overlay {
   position: fixed;
+  box-sizing: border-box;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  padding-left: 2em;
+  padding-right: 2em;
+  padding-top: 1em;
+  padding-bottom: 1em;
   background-color: var(--bg-color);
   color: #fff;
   opacity: 0;
   pointer-events: none;
-  padding: 100px 2em;
-  box-sizing: border-box;
   transition-property: opacity;
   transition-duration: 0.5s;
   z-index: 99;
 }
 
 .overlay p {
+  text-align: center;
   font-size: 1.1em;
 }
 
@@ -156,34 +181,43 @@ footer {
   text-decoration-style: dotted;
 }
 
+.close-cross {
+  position: fixed;
+}
+
 .close-cross:before {
-  position: absolute;
+  position: fixed;
   content: "\00d7";
   top: 5px;
   right: 15px;
   font-size: 40px;
   font-weight: 300;
+  padding: 0;
+  text-align: center;
+  margin: 0;
 }
 
 .overlay.open {
-  opacity: 0.9;
+  opacity: 0.8;
   pointer-events: auto;
 }
 
-#welcome-overlay {
-  padding: 0;
-  text-align: center;
-}
-
-#welcome-overlay p {
-  margin: 3em;
-}
-
-#welcome-overlay.open {
+.overlay.cover.open {
   opacity: 1;
 }
 
-#error-overlay {}
+#info-overlay {
+  overflow: scroll;
+}
+
+#error-icon {
+  position: relative;
+  left:50%;
+  width: 100px;
+  height: 100px;
+  margin-left: -50px;
+}
+
 
 /* Media Queries ========================================================================== */
 
@@ -196,5 +230,10 @@ footer {
 @media only screen and (orientation: landscape) {
   #title {
     opacity: 0;
+  }
+
+  .overlay {
+    padding-left: 4em;
+    padding-right: 4em;
   }
 }
