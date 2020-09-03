@@ -3,6 +3,6 @@ node_modules/
 Thumbs.db
 bin/.browserify-cache
 package-lock.json
-public/*.js
 dist
 vendors
+public/*.js
