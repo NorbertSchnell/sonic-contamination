@@ -27,7 +27,7 @@ function switchStatus(e) {
 }
 
 function main() {
-  errorOverlay = new Overlay('error-overlay', false);
+  errorOverlay = new Overlay('error-overlay');
 
   statusSwitch = document.getElementById('status-switch');
   statusSwitch.addEventListener('click', switchStatus);
