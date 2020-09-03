@@ -12,7 +12,7 @@ async function getControl(param) {
 
 async function setControl(param, errorCallback = function() {}) {
   const query = new URLSearchParams(param);
-  const url = baseURL + 'control' + '?' + query.toString();
+  const url = baseURL + '/control' + '?' + query.toString();
   const response = await fetch(url, { method: 'PUT' });
 
   if (response.status === 200)
