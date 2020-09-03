@@ -31,12 +31,12 @@ function handleGET(request, response) {
   const parsedURL = url.parse(request.url, true);
   const param = parsedURL.path;
 
-  switch(param) {
+  switch (param) {
     case '/status':
-    response.setHeader("content-type", "text/html; charset=utf-8");
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.write(status);
-    break;
+      response.setHeader("content-type", "text/html; charset=utf-8");
+      response.setHeader("Access-Control-Allow-Origin", "*");
+      response.write(status);
+      break;
   }
 
   response.end();
@@ -52,8 +52,8 @@ function handlePUT(request, response) {
 
     switch (param) {
       case 'status':
-      success = updateStatus(value);
-      break;
+        success = updateStatus(value);
+        break;
     }
 
     if (!success)
@@ -73,15 +73,9 @@ function updateStatus(value) {
   return false;
 }
 
-// static file server
-portfinder.basePort = 3000;
-portfinder.getPortPromise()
-  .then(port => {
-    connect()
-      .use('/control', handleControl)
-      .use(serveStatic(publicDir))
-      .listen(port, () => console.log(`> server running on http://127.0.0.1:${port}`));
-  })
-  .catch((err) => {
-    console.error('no available port');
-  });
+const port = 3000;
+const ip = '0.0.0.0';
+const app = connect()
+  .use('/control', handleControl)
+  .use(serveStatic(publicDir))
+  .listen(port, ip, () => console.log(`> server running on http://${ip}:${port}`));
