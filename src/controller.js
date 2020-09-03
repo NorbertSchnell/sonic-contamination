@@ -1,4 +1,5 @@
 import '@babel/polyfill';
+import Overlay from './utils/Overlay';
 import { getStatus, setStatus } from './utils/control';
 
 let errorOverlay = null;
