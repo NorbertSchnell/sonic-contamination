@@ -26,11 +26,12 @@ function switchStatus(e) {
 }
 
 function main() {
-  errorOverlay = document.getElementById('error-overlay');
+  errorOverlay = new Overlay('error-overlay', false);
+
   statusSwitch = document.getElementById('status-switch');
+  statusSwitch.addEventListener('click', switchStatus);
 
   updateStatus();
-  statusSwitch.addEventListener('click', switchStatus);
 }
 
 window.addEventListener('load', main);
