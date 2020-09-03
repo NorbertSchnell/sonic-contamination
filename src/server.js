@@ -34,6 +34,7 @@ function handleGET(request, response) {
   switch(param) {
     case '/status':
     response.setHeader("content-type", "text/html; charset=utf-8");
+    response.setHeader("Access-Control-Allow-Origin", "*");
     response.write(status);
     break;
   }
