@@ -1,10 +1,17 @@
-//const baseURL = "https://nschnell.uber.space/sonic-contamination";
-const baseURL = 'http://localhost:3000/';
+const baseURL = "https://nschnell.uber.space/sonic-contamination";
+//const baseURL = 'http://localhost:3000/';
+
+const headers = new Headers();
 
 async function getControl(param) {
-  const url = baseURL + '/control/' + param;
-  const response = await (fetch(url, { method: 'GET' }).catch(() => {
-    return Promise.reject(new Error('cannot set control on server'));    
+  const url = baseURL + '/control' + param;
+  const response = await (fetch(url, {
+    method: 'GET',
+    headers: headers,
+    mode: 'cors',
+    cache: 'default',
+  }).catch(() => {
+    return Promise.reject(new Error('cannot get control from server'));    
   }));
 
   return response.text();
@@ -13,12 +20,11 @@ async function getControl(param) {
 async function setControl(param, errorCallback = function() {}) {
   const query = new URLSearchParams(param);
   const url = baseURL + '/control' + '?' + query.toString();
-  const response = await fetch(url, { method: 'PUT' });
+  const response = await (fetch(url, { method: 'PUT' }).catch(() => {
+    return Promise.reject(new Error('cannot get control from server'));    
+  }));
 
-  if (response.status === 200)
-    return response;
-
-  return Promise.reject(new Error('cannot set control on server'));
+  return response;
 }
 
 async function setStatus(status) {
@@ -26,7 +32,7 @@ async function setStatus(status) {
 }
 
 async function getStatus() {
-  return getControl('status');
+  return getControl('/status');
 }
 
 export { getStatus, setStatus };

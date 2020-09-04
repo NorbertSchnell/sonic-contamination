@@ -1,9 +1,8 @@
-// import '@babel/polyfill';
+import '@babel/polyfill';
 import path from 'path';
 import url from 'url';
 import connect from 'connect';
 import serveStatic from 'serve-static';
-import portfinder from 'portfinder';
 import livereload from 'livereload';
 
 const statusEnum = ['running', 'off'];
@@ -23,7 +22,6 @@ function handleControl(request, response, next) {
     case 'PUT':
       handlePUT(request, response);
       break;
-
   }
 }
 
@@ -31,10 +29,11 @@ function handleGET(request, response) {
   const parsedURL = url.parse(request.url, true);
   const param = parsedURL.path;
 
+  response.setHeader("content-type", "text/html; charset=utf-8");
+  response.setHeader("Access-Control-Allow-Origin", "*");
+
   switch (param) {
     case '/status':
-      response.setHeader("content-type", "text/html; charset=utf-8");
-      response.setHeader("Access-Control-Allow-Origin", "*");
       response.write(status);
       break;
   }
@@ -45,6 +44,9 @@ function handleGET(request, response) {
 function handlePUT(request, response) {
   const parsedURL = url.parse(request.url, true);
   const query = parsedURL.query;
+
+  response.setHeader("content-type", "text/html; charset=utf-8");
+  response.setHeader("Access-Control-Allow-Origin", "*");
 
   for (const param in query) {
     const value = query[param];
