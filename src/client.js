@@ -16,13 +16,14 @@ const audioContext = audio.audioContext;
 const statusUpdatePeriod = 2;
 const numRefTones = 2;
 const refSynthAmp = 0.05;
-const reSynthAmp = 0.1;
+const reSynthAmp = 0.5;
 const analysisFramePeriod = 0.2;
-const offTime = 1;
+const offTime = Infinity;
 const fadeTime = 0.5;
 const numRefFreqs = refFreqs.length;
 const refFreqIndices = new Map();
 const refFreqIntensity = [];
+const sensitivity = 3000;
 
 let contaminationGrade = 0;
 let freeRefFreqs = [...refFreqs];
@@ -256,7 +257,7 @@ function onAnalysisFrame(array, peaks) {
     if (outFadingFreq !== null)
       forgetFrequency();
 
-    if (Math.random() < 0.05)
+    if (Math.random() < 0.05) // every 33 to 44 seconds
       changeFrequency();
   }
 
@@ -266,7 +267,7 @@ function onAnalysisFrame(array, peaks) {
     const peak = peaks[i];
     const freq = peak.freq;
     const peakPower = decibelToPower(peak.level);
-    const peakIntensity = Math.min(1, 10000 * Math.sqrt(peakPower));
+    const peakIntensity = Math.min(1, sensitivity * Math.sqrt(peakPower));
 
     if (currentRefFreqs.indexOf(freq) < 0 && freq !== outFadingFreq)
       maxIntensity = Math.max(maxIntensity, peakIntensity);
