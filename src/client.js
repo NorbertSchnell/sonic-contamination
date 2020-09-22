@@ -57,6 +57,7 @@ let reSynth = null;
 let analyser = null;
 
 let animationEnabled = false;
+let animationCount = 0;
 let canvasContainer = null;
 let canvas = null;
 
@@ -258,6 +259,8 @@ function drawAnimation() {
 
     requestAnimationFrame(drawAnimation);
   }
+
+  animationCount++;
 }
 
 function onAnalysisFrame(array, peaks) {

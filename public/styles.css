@@ -41,6 +41,18 @@ a {
   text-decoration: none;
 }
 
+img {
+  background-color: rgba(0, 0, 0, 0);
+
+}
+
+#swr-ex-logo {
+  position: fixed;
+  bottom: 1.5em;
+  left: 7%;
+  width: 4em;
+}
+
 #canvas-container {
   position: fixed;
   top: 0;
@@ -127,7 +139,7 @@ footer {
   position: absolute;
   bottom: 1.5em;
   left: 7%;
-  background-image: url('images/corona.png');
+  background-image: url('images/EXP_SW_logo.png');
   background-size: contain;
   background-color: rgba(0, 0, 0, 0);
   border-style: none;
