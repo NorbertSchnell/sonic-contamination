@@ -18,7 +18,9 @@ const numRefTones = 2;
 const refSynthAmp = 0.05;
 const reSynthAmp = 0.5;
 const analysisFramePeriod = 0.2;
-const offTime = Infinity;
+const offTime = 1;
+const minFreqTime = 33;
+const maxFreqTime = 44;
 const fadeTime = 0.5;
 const numRefFreqs = refFreqs.length;
 const refFreqIndices = new Map();
@@ -28,6 +30,7 @@ const sensitivity = 3000;
 let contaminationGrade = 0;
 let freeRefFreqs = [...refFreqs];
 let currentRefFreqs = [];
+let nextChangeTime = Infinity;
 
 let os = null;
 let runningOnMobile = true;
@@ -113,6 +116,10 @@ function startSynth() {
   const f22 = f21 + 100 * Math.random();
   const cluster = [f11, f12, f21, f22]
   reSynth = new ClusterSynth(cluster, audioMaster.node);
+
+  const time = audioContext.currentTime;
+  const changeInterval = minFreqTime + (maxFreqTime - minFreqTime) * Math.random();;
+  nextChangeTime = time + changeInterval;
 }
 
 function stopSynth() {
@@ -149,6 +156,10 @@ function changeFrequency() {
   refSynths.set(newFreq, newSynth);
 
   changeTime = audioContext.currentTime;
+
+  const changeInterval = minFreqTime + (maxFreqTime - minFreqTime) * Math.random();
+  nextChangeTime = changeTime + changeInterval;
+
   inFadingFreq = newFreq;
   outFadingFreq = oldFreq;
 }
@@ -170,8 +181,7 @@ function stopAnimation() {
 }
 
 function drawAnimation() {
-  if (animationEnabled) {
-
+  if (animationEnabled && animationCount % 4 === 0) {
     const time = audioContext.currentTime;
     const ctx = canvas.getContext('2d');
     const size = canvas.width;
@@ -253,13 +263,11 @@ function drawAnimation() {
 function onAnalysisFrame(array, peaks) {
   const time = audioContext.currentTime;
 
-  if (time - changeTime >= offTime) {
-    if (outFadingFreq !== null)
-      forgetFrequency();
+  if (outFadingFreq !== null && time - changeTime >= offTime)
+    forgetFrequency();
 
-    if (Math.random() < 0.05) // every 33 to 44 seconds
-      changeFrequency();
-  }
+  if (time >= nextChangeTime)
+    changeFrequency();
 
   let maxIntensity = 0;
 
