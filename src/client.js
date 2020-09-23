@@ -174,6 +174,7 @@ function forgetFrequency() {
 
 function startAnimation() {
   animationEnabled = true;
+  animationCount = 0;
   requestAnimationFrame(drawAnimation);
 }
 
@@ -182,85 +183,88 @@ function stopAnimation() {
 }
 
 function drawAnimation() {
-  if (animationEnabled && animationCount % 4 === 0) {
-    const time = audioContext.currentTime;
-    const ctx = canvas.getContext('2d');
-    const size = canvas.width;
-    const l = size / 2;
+  if (animationEnabled) {
+    if (animationCount % 4 === 0) {
+      const time = audioContext.currentTime;
+      const ctx = canvas.getContext('2d');
+      const size = canvas.width;
+      const l = size / 2;
 
-    ctx.clearRect(0, 0, size, size);
+      ctx.clearRect(0, 0, size, size);
 
-    const maxOpacity = 0.5;
-    const goodColor = '#fff';
-    const badColor = '#15f4ee';
-    //const badColor = '#ffa500';
-    const ringGap = 0.03 * l;
-    const centerRadius = 0.3 * l;
-    const innerRingRadius = centerRadius + ringGap;
-    const maxRingRadius = 0.74 * l;
-    const maxRingThinkness = maxRingRadius - innerRingRadius;
-    let startAngle = 0;
-    let deltaAngle = 2 * Math.PI / numRefFreqs;
-    let innerRingGapAngle = Math.asin(ringGap / innerRingRadius);
-    let outerRingGapAngle, outerRingRadius;
+      const maxOpacity = 0.5;
+      const goodColor = '#fff';
+      const badColor = '#15f4ee';
+      //const badColor = '#ffa500';
+      const ringGap = 0.03 * l;
+      const centerRadius = 0.3 * l;
+      const innerRingRadius = centerRadius + ringGap;
+      const maxRingRadius = 0.74 * l;
+      const maxRingThinkness = maxRingRadius - innerRingRadius;
+      let startAngle = 0;
+      let deltaAngle = 2 * Math.PI / numRefFreqs;
+      let innerRingGapAngle = Math.asin(ringGap / innerRingRadius);
+      let outerRingGapAngle, outerRingRadius;
 
-    ctx.fillStyle = '#fff';
-    ctx.globalAlpha = 0.1;
-
-    ctx.beginPath();
-    ctx.arc(l, l, centerRadius - ringGap, 0, 2 * Math.PI, false);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = badColor;
-    ctx.globalAlpha = maxOpacity * contaminationGrade;
-
-    ctx.beginPath();
-    ctx.arc(l, l, centerRadius - ringGap, 0, 2 * Math.PI, false);
-    ctx.closePath();
-    ctx.fill();
-
-    for (let i = 0; i < numRefFreqs; i++) {
-      const endAngle = startAngle + deltaAngle;
-      const freq = refFreqs[i];
-      const fade = Math.min(1, (time - changeTime) / fadeTime);
-      let ring = 0;
-
-      if (freq == inFadingFreq) {
-        ctx.fillStyle = goodColor;
-        ctx.globalAlpha = maxOpacity * fade;
-        outerRingRadius = innerRingRadius + maxRingThinkness * fade;
-      } else if (freq == outFadingFreq) {
-        ctx.fillStyle = goodColor;
-        ctx.globalAlpha = maxOpacity * (1 - fade);
-        outerRingRadius = innerRingRadius + maxRingThinkness * (1 - fade);
-      } else if (currentRefFreqs.indexOf(freq) >= 0) {
-        ctx.fillStyle = goodColor;
-        ctx.globalAlpha = maxOpacity;
-        outerRingRadius = innerRingRadius + maxRingThinkness;
-      } else {
-        const intensity = refFreqIntensity[i];
-        ctx.fillStyle = badColor;
-        ctx.globalAlpha = maxOpacity * intensity;
-        outerRingRadius = innerRingRadius + maxRingThinkness * intensity;
-      }
-
-      outerRingGapAngle = Math.asin(ringGap / outerRingRadius);
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = 0.1;
 
       ctx.beginPath();
-      ctx.arc(l, l, outerRingRadius, startAngle + outerRingGapAngle, endAngle - outerRingGapAngle, false);
-      ctx.arc(l, l, innerRingRadius, endAngle - innerRingGapAngle, startAngle + innerRingGapAngle, true);
+      ctx.arc(l, l, centerRadius - ringGap, 0, 2 * Math.PI, false);
       ctx.closePath();
       ctx.fill();
 
-      startAngle = endAngle;
-      endAngle = startAngle + deltaAngle;
+      ctx.fillStyle = badColor;
+      ctx.globalAlpha = maxOpacity * contaminationGrade;
+
+      ctx.beginPath();
+      ctx.arc(l, l, centerRadius - ringGap, 0, 2 * Math.PI, false);
+      ctx.closePath();
+      ctx.fill();
+
+      for (let i = 0; i < numRefFreqs; i++) {
+        const endAngle = startAngle + deltaAngle;
+        const freq = refFreqs[i];
+        const fade = Math.min(1, (time - changeTime) / fadeTime);
+        let ring = 0;
+
+        if (freq == inFadingFreq) {
+          ctx.fillStyle = goodColor;
+          ctx.globalAlpha = maxOpacity * fade;
+          outerRingRadius = innerRingRadius + maxRingThinkness * fade;
+        } else if (freq == outFadingFreq) {
+          ctx.fillStyle = goodColor;
+          ctx.globalAlpha = maxOpacity * (1 - fade);
+          outerRingRadius = innerRingRadius + maxRingThinkness * (1 - fade);
+        } else if (currentRefFreqs.indexOf(freq) >= 0) {
+          ctx.fillStyle = goodColor;
+          ctx.globalAlpha = maxOpacity;
+          outerRingRadius = innerRingRadius + maxRingThinkness;
+        } else {
+          const intensity = refFreqIntensity[i];
+          ctx.fillStyle = badColor;
+          ctx.globalAlpha = maxOpacity * intensity;
+          outerRingRadius = innerRingRadius + maxRingThinkness * intensity;
+        }
+
+        outerRingGapAngle = Math.asin(ringGap / outerRingRadius);
+
+        ctx.beginPath();
+        ctx.arc(l, l, outerRingRadius, startAngle + outerRingGapAngle, endAngle - outerRingGapAngle, false);
+        ctx.arc(l, l, innerRingRadius, endAngle - innerRingGapAngle, startAngle + innerRingGapAngle, true);
+        ctx.closePath();
+        ctx.fill();
+
+        startAngle = endAngle;
+        endAngle = startAngle + deltaAngle;
+      }
+
+      animationCount = 0;
     }
 
+    animationCount++;
     requestAnimationFrame(drawAnimation);
   }
-
-  animationCount++;
 }
 
 function onAnalysisFrame(array, peaks) {
