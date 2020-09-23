@@ -46,13 +46,6 @@ img {
 
 }
 
-#swr-ex-logo {
-  position: fixed;
-  bottom: 1.5em;
-  left: 7%;
-  width: 4em;
-}
-
 #canvas-container {
   position: fixed;
   top: 0;
@@ -145,10 +138,19 @@ footer {
   border-style: none;
 }
 
-#info-button {
-  position: absolute;
+#swr-ex-logo {
+  position: fixed;
   bottom: 1.5em;
-  right: 7%;
+  left: 7%;
+  height: 1.5em;
+}
+
+#info-button {
+  position: fixed;
+  bottom: 1.5em;
+  right: 12%;
+  height: 1.5em;
+  font-weight: bold;
 }
 
 .switch {

@@ -14,7 +14,7 @@ import { refFreqs } from './setup';
 const audioContext = audio.audioContext;
 
 const statusUpdatePeriod = 2;
-const numRefTones = 2;
+const numRefTones = 3;
 const refSynthAmp = 0.05;
 const reSynthAmp = 0.5;
 const analysisFramePeriod = 0.2;
