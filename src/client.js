@@ -319,7 +319,7 @@ function setLocalStatus(status) {
       break;
 
     case 'server-error':
-      errorOverlay.open('Oops, cannot connect to server.');
+      errorOverlay.open('Autsch, es besteht keine Verbindung zum Server.');
       //audioMaster.setGain(0, 1);
       stopAnimation();
       stopAnalysis();
@@ -327,11 +327,11 @@ function setLocalStatus(status) {
       break;
 
     case 'audio-error':
-      errorOverlay.open('Oops, cannot setup mobile audio.');
+      errorOverlay.open('Autsch, die Anwendung kann nicht auf Mikrofon und Audioresourcen zugreifen.');
       break;
 
-    default:
-      console.error('unknown local status:', status);
+    // default:
+    //   console.error('unknown local status:', status);
   }
 }
 
