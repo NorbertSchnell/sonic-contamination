@@ -8,6 +8,7 @@
     "minify": "terser public/client.js -o public/client.min.js",
     "postinstall": "mkdir -p public/vendors && cp -R node_modules/livereload public/vendors/ && npm run transpile",
     "serve": "npm run transpile && node dist/server.js",
+    "start": "node dist/server.js",
     "transpile": "rollup -c",
     "watch:transpile": "rollup -c --watch.chokidar",
     "watch:server": "chokidar ./dist/server.js -c \"node --inspect dist/server.js\"",
