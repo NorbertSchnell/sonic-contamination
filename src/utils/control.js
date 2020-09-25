@@ -1,5 +1,5 @@
-const baseURL = "https://nschnell.uber.space/pathfinder-19";
-//const baseURL = 'http://0.0.0.0:3000';
+//const baseURL = "https://nschnell.uber.space/pathfinder-19";
+const baseURL = 'http://0.0.0.0:3000';
 const headers = new Headers();
 
 async function sendRequest(url) {

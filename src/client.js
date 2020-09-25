@@ -39,6 +39,7 @@ let status = null;
 let idleCountDown = Infinity;
 
 let initializedAudioInput = false;
+let beforeOverlay = null;
 let welcomeOverlay = null;
 let endOverlay = null;
 let infoOverlay = null;
@@ -308,14 +309,22 @@ function onResize() {
 
 function setLocalStatus(status) {
   switch (status) {
-    case 'off':
-      endOverlay.open();
-      audioMaster.setGain(0, 10);
+    case 'before':
+      beforeOverlay.open();
+      endOverlay.close();
+      audioMaster.setGain(0, 1);
       break;
 
     case 'running':
+      beforeOverlay.close();
       endOverlay.close();
       audioMaster.setGain(1, 1);
+      break;
+
+    case 'end':
+      beforeOverlay.close();
+      endOverlay.open();
+      audioMaster.setGain(0, 10);
       break;
 
     case 'server-error':
@@ -330,15 +339,15 @@ function setLocalStatus(status) {
       errorOverlay.open('Autsch, die Anwendung kann nicht auf Mikrofon und Audioresourcen zugreifen.');
       break;
 
-    // default:
-    //   console.error('unknown local status:', status);
+      // default:
+      //   console.error('unknown local status:', status);
   }
 }
 
 async function updateStatus() {
   getStatus()
     .then((newStatus) => {
-      if (status === 'off') {
+      if (status === 'end') {
         idleCountDown--;
 
         if (idleCountDown <= 0)
@@ -346,14 +355,10 @@ async function updateStatus() {
       }
 
       if (newStatus !== status) {
-        if (newStatus === 'running') {
-          setLocalStatus('running');
-        } else {
-          setLocalStatus('off');
+        setLocalStatus(newStatus);
 
-          if (status === 'running')
-            idleCountDown = 10;
-        }
+        if (status === 'running' && newStatus == 'end')
+          idleCountDown = 10;
 
         status = newStatus;
         console.log(`status = ${status}`);
@@ -382,6 +387,7 @@ function main() {
 
   welcomeOverlay = new Overlay('welcome-overlay', true, initAudio);
   infoOverlay = new Overlay('info-overlay', true);
+  beforeOverlay = new Overlay('before-overlay', false);
   endOverlay = new Overlay('end-overlay', false);
   errorOverlay = new Overlay('error-overlay', false);
 

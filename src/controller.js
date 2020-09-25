@@ -18,10 +18,19 @@ function updateStatus() {
 }
 
 function switchStatus(e) {
-  if (status === 'running')
-    status = 'off';
-  else
+  switch (status) {
+    case 'before':
     status = 'running';
+    break;
+
+    case 'running':
+    status = 'end';
+    break;
+
+    case 'end':
+    status = 'before';
+    break;
+  }
 
   setStatus(status);
   statusSwitch.innerHTML = status;

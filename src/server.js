@@ -5,8 +5,8 @@ import connect from 'connect';
 import serveStatic from 'serve-static';
 import livereload from 'livereload';
 
-const statusEnum = ['running', 'off'];
-let status = 'running';
+const statusEnum = ['before', 'running', 'end'];
+let status = 'before';
 
 const publicDir = path.join(process.cwd(), 'public');
 

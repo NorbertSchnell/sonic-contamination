@@ -46,6 +46,13 @@ img {
 
 }
 
+p {
+  margin-block-start: 0.5em;
+  margin-block-end: 0.5em;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
 #canvas-container {
   position: fixed;
   top: 0;
@@ -224,12 +231,10 @@ footer {
   overflow: scroll;
 }
 
-#error-icon {
+#centered-icon {
   position: relative;
-  left:50%;
-  width: 100px;
-  height: 100px;
-  margin-left: -50px;
+  left: 50%;
+  margin-left: -75px;
 }
 
 
@@ -238,6 +243,15 @@ footer {
 @media only screen and (orientation: portrait) {
   #title {
     opacity: 1;
+  }
+
+  h1 {
+    margin-block-end: 2em;
+  }
+
+  p {
+    margin-block-start: 1.5em;
+    margin-block-end: 1.5em;
   }
 }
 
@@ -249,5 +263,15 @@ footer {
   .overlay {
     padding-left: 4em;
     padding-right: 4em;
+  }
+
+
+  h1 {
+    margin-block-end: 0.5em;
+  }
+
+  p {
+    margin-block-start: 0.5em;
+    margin-block-end: 0.5em;
   }
 }
