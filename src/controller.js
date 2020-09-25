@@ -10,6 +10,7 @@ function updateStatus() {
   getStatus()
     .then((value) => {
       status = value;
+      statusSwitch.innerHTML = status;
     })
     .catch((err) => {
       errorOverlay.open(`Oops, ${err}.`);
