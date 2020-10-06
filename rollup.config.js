@@ -49,6 +49,27 @@ export default [
     },
   },
 
+  // build shrill
+  {
+    input: 'src/shrill.js',
+    output: [{
+      file: 'public/shrill.js',
+      format: 'iife',
+      sourcemap: 'inline',
+      name: 'app',
+    }, ],
+    plugins: [
+      commonjs(),
+      babel(),
+      resolve({ preferBuiltins: true }),
+      globals(),
+      nodeBuiltins(),
+    ],
+    watch: {
+      clearScreen: false
+    },
+  },
+
   // build server
   {
     input: 'src/server.js',
